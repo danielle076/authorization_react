@@ -1,4 +1,5 @@
 ## Routing
+
 Maak de volgende pagina's met routing:
 - Een homepagina (url: /)
 - Een profielpagina: (url: /profile)
@@ -114,6 +115,7 @@ Maak de volgende pagina's met routing:
     export default App;
 
 ## React-hook-form
+
 Maak met react-hook-form een inlog formulier (alleen gebruikersnaam en wachtwoord) op de inlog pagina en een registreer-formulier (gebruikersnaam, email en wachtwoord) op de registreerpagina. Deze formulieren loggen de ingevulde waardes in de console wanneer de gebruiker op submit drukt.
 
 <i>map pages > SignIn.js</i>
@@ -232,6 +234,7 @@ Maak met react-hook-form een inlog formulier (alleen gebruikersnaam en wachtwoor
     export default SignUp;    
 
 ## JSON Web Tokens
+
 Authenticatie is het verzekeren dat alleen de juiste personen bij de content kunnen. Deze data wordt opgeslagen in een back-end.
 
 De versleuteling tussen de back-end en front-end verloopt vaak met JSON Web Tokens. Deze JSON Web Tokens bevatten veel informatie.
@@ -241,6 +244,7 @@ JSON Web Tokens (JWT's) volgen een specifieke, vastgestelde standaard om een soo
 Er kunnen ook stukjes data in opgeslagen worden.
 
 ### Hoe ziet een JWT eruit: https://jwt.io/
+
 Een JSON Web Token is wat we gebruiken om authenticatie te verzorgen in de webapplicaties.
 
 ![img.png](src/assets/img.png)
@@ -285,6 +289,7 @@ Wat willen we niet opslaan in de context:
 - het wachtwoord van de gebruiker
 
 ## Fake database server
+
 We hebben een server nodig om data in op te slaan, om de echte situatie na te kunnen doen. Deze kun je vinden op github: https://github.com/danielle076/fake_server_react. In het db.json worden 'zogenaamd' de gebruikers opgeslagen.  
 
 De nepserver draait apart van de frontend project, zodat we de "database" via een API kunnen benaderen. Zo kun je door gebruik te maken van specifieke eindpoints, data opvragen en toevoegen.
@@ -298,3 +303,241 @@ Deze server draait op http://localhost:3000, wanneer je dit in de browser opent 
 <i>Let op</i>: omdat deze server op localhost:3000 draait is het belangrijk deze server te starten voor je een React-project start. React zal dan automatisch vragen om dat project op een andere port te draaien.
 
 Het benaderen van de endpoints staat in de documentatie.
+
+## Registreren (SignUp.js)
+
+Het registreren kunnen we doen door een `POST request` naar de basisurl (http://localhost:3000) + `/register` te doen (zie documentatie fake_server_react).
+
+Om een post request te maken hebben we een `URL` (endpoint) nodig en een `dataobject` (als je iets post, dan stuur je data mee). Daarnaast is ook nog optioneel om een `config` mee te sturen, bijvoorbeeld een JWT token.
+
+De keys `email` en `wachtwoord` zjn vereist. Andere parameters mogen ook meegestuurd worden, maar worden niet gevalideerd.
+
+Het wachtwoord wordt vervolgens versleuteld opgeslagen (met bcryptjs). De response bevat de JWT token die <b>na één uur expireert</b>.
+
+Voordat we op de submit knop drukken in de app, willen we dat er een aantal dingen gebeuren. We willen de gebruiker gaan registreren. Op dit moment wanneer je email, gebruikersnaam en wachtwoord invult komt het in de console te staan.
+
+![img.png](src/assets/img3.png)
+
+De volgende stappen doorlopen we om te kunnen registreren. 
+1. Installeer `npm install axios` en importeer axios
+2. asynchrone functie
+3. try / catch blok<br>
+   - error
+   - loading
+4. In try: post request maken naar endpoint: http://localhost:3000/register, axios post request krijgt de url en het dataobject mee (deze moet in dit geval minimaal email en password bevatten)
+5. Succesmelding tonen aan de gebruiker
+6. Gebruiker doorsturen naar inlog-formulier
+
+<i>Stap 1: installeer `npm install axios` en importeer axios</i>
+
+    import React from 'react';
+    import axios from 'axios';
+    import { Link } from 'react-router-dom';
+    import { useForm } from 'react-hook-form';
+
+<i>Stap 2: asynchrone functie</i>
+
+    async function onSubmit(data) {
+        console.log(data);
+    }
+
+<i>Stap 3: try / catch blok + error & loading</i>
+
+      import axios from 'axios';
+      
+      function SignUp() {
+         const { handleSubmit, register } = useForm();
+         const [error, setError] = useState("");
+         const [loading, toggleLoading] = useState("")
+         
+         async function onSubmit(data) {
+            console.log(data);
+            try {
+            
+                } catch(e){
+                  setError("Er is iets misgegaan bij het ophalen van de data.")
+                  console.error(e)
+                }
+                toggleLoading(false);
+         }
+         
+         return (
+            <>
+               <h1>Registreren</h1>
+               <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab alias cum debitis dolor dolore fuga id molestias qui quo unde?</p>
+            
+               <form onSubmit={handleSubmit(onSubmit)}>
+                 {error && <p>{error}</p>}
+                 {loading && <p>Data wordt geladen...</p>}
+
+<i>Stap 4: in try: post request maken naar endpoint: http://localhost:3000/register, axios post request krijgt de url en het dataobject mee (deze moet in dit geval minimaal email en password bevatten)</i> <br>
+
+De axios.post krijgt 2 dingen mee: de url en het dataobject.
+
+      async function onSubmit(data) {
+        console.log(data);
+        try {
+            const result = await axios.post('http://localhost:3000/register', data);
+            console.log(result);
+        } catch (e) {
+            setError("Er is iets misgegaan bij het ophalen van de data.")
+            console.error(e)
+        }
+        toggleLoading(false);
+    }
+
+Het dataobject verwacht minimaal een `key` email en password. Je moet goed opletten wat de back-end vraagt en hoe het geschreven moet worden. In dit geval staat alles al goed, dus kunnen we gewoon `data` erin zetten. Maar wanneer de keys niet hetzelfde waren, had je het als volgt moeten doen:
+
+      try {
+      const result = await axios.post('http://localhost:3000/register',  {
+      email: data.email,
+      password: data.password,    
+      })
+
+De `console.log(result);` komt pas terug, wanneer het invullen van de gegevens gelukt is.
+
+We gaan ons registreren.
+
+![img.png](src/assets/img4.png)
+
+In de console komt het volgende.
+
+![img.png](src/assets/img5.png)
+
+We hebben van deze fake backend status 201 teruggekregen, wat betekend dat het registreren goed is gegaan. Wanneer je de key `data` opent zie je een `accessToken` die we ook meegekregen hebben.
+Als het fout was gegaan, dan waren we automatisch naar het catch blok gesprongen en kreeg je een error bericht.
+
+Als je de fake server opent, zie je in het bestand `db.json` de registreer gegevens staan.
+
+      {
+      "email": "freckle@gmail.com",
+      "password": "$2a$10$nlCSQTmD6qdxHCJdWqdRFOLr1OKdNMIsaftldaG8uQgE1HJjsPdKi",
+      "username": "freckle",
+      "id": 3
+      }
+
+<i>5. Succesmelding tonen aan de gebruiker</i>
+
+Maken state aan en zetten hem op default `false`.
+
+      const [registerSuccess, toggleRegisterSuccess] = useState(false);
+
+Wanneer het is gelukt zetten we hem op `true`.
+
+      toggleRegisterSuccess(true);
+
+Dit willen we laten zien in de interface.
+
+      { registerSuccess === true && <p>Registreren is gelukt! Je kan nu inloggen.</p> }
+
+<i>6. Gebruiker doorsturen naar inlog-formulier</i>
+
+Wanneer je iemand wilt doorpushen naar een andere pagina in React heb je `useHistory` nodig.
+
+We importeren useHistory.
+
+      import {Link, useHistory} from 'react-router-dom';
+
+We maken een variabele history aan.
+
+      const history = useHistory();
+
+We pushen history naar de signin pagina.
+
+      history.push('/signin');
+
+Wanneer je nu gaat registreren ga je gelijk naar de inlog pagina, maar je wilt nog wel eerst de registerSuccess melding geven aan de gebruiker. We kunnen het handmatig vertragen.
+
+      setTimeout(() => {}, 2000);
+
+Hierin zet je de history push pagina.
+
+      setTimeout(() => {
+         history.push('/signin');                
+      }, 2000);
+
+### Volledige code pagina SignUp.js
+
+      import React, {useState} from 'react';
+      import axios from 'axios';
+      import {Link, useHistory} from 'react-router-dom';
+      import {useForm} from 'react-hook-form';
+      
+      function SignUp() {
+      const {handleSubmit, register} = useForm();
+      const [error, setError] = useState("");
+      const [loading, toggleLoading] = useState("");
+      const [registerSuccess, toggleRegisterSuccess] = useState(false);
+      const history = useHistory();
+      
+          async function onSubmit(data) {
+              console.log(data);
+              try {
+                  const result = await axios.post('http://localhost:3000/register', data);
+                  console.log(result);
+                  toggleRegisterSuccess(true);
+                  setTimeout(() => {
+                      history.push('/signin');
+                  }, 2000);
+              } catch (e) {
+                  setError("Er is iets misgegaan bij het ophalen van de data.")
+                  console.error(e)
+              }
+              toggleLoading(false);
+          }
+      
+          return (
+              <>
+                  <h1>Registreren</h1>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab alias cum debitis dolor dolore fuga id
+                      molestias qui quo unde?</p>
+      
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                      {error && <p>{error}</p>}
+                      {loading && <p>Data wordt geladen...</p>}
+      
+                      <label htmlFor="email-field">
+                          Email:
+                          <input
+                              type="email"
+                              id="email-field"
+                              name="email"
+                              {...register("email")}
+                          />
+                      </label>
+      
+                      <label htmlFor="username-field">
+                          Gebruikersnaam:
+                          <input
+                              type="text"
+                              id="username-field"
+                              name="username"
+                              {...register("username")}
+                          />
+                      </label>
+      
+                      <label htmlFor="password-field">
+                          Wachtwoord:
+                          <input
+                              type="password"
+                              id="password-field"
+                              name="password"
+                              {...register("password")}
+                          />
+                      </label>
+                      
+                      <button
+                          type="submit"
+                          className="form-button"
+                      >
+                          Maak account aan
+                      </button>
+                      {registerSuccess === true && <p>Registreren is gelukt! Je kan nu inloggen.</p>}
+                  </form>
+                  
+                  <p>Heb je al een account? Je kunt je <Link to="/signin">hier</Link> inloggen.</p>
+              </>
+          );
+      }
+      
+      export default SignUp;
