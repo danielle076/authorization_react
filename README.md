@@ -232,11 +232,11 @@ Maak met react-hook-form een inlog formulier (alleen gebruikersnaam en wachtwoor
     export default SignUp;    
 
 ## JSON Web Tokens
-Authenticatie is het verzekeren dat alleen de juiste personen bij de content kunnen. Zoals je weet slaan we deze data altijd op in een back-end.
+Authenticatie is het verzekeren dat alleen de juiste personen bij de content kunnen. Deze data wordt opgeslagen in een back-end.
 
 De versleuteling tussen de back-end en front-end verloopt vaak met JSON Web Tokens. Deze JSON Web Tokens bevatten veel informatie.
 
-JSON Web Tokens (JWT's) volgen een specifieke, vastgestelde standaard om een soort "handtekening" te creëren.
+JSON Web Tokens (JWT's) volgen een specifieke, vastgestelde standaard om een soort digitale "handtekening" te creëren.
 
 Er kunnen ook stukjes data in opgeslagen worden.
 
@@ -246,7 +246,7 @@ Een JSON Web Token is wat we gebruiken om authenticatie te verzorgen in de webap
 ![img.png](src/assets/img.png)
 
 De token bestaat uit drie stukken.
-1. <i>Header</i>: type van deze token.
+1. <i>Header</i>: type van de token.
 2. <i>Payload</i>: de data die erin opgeslagen is, zoals bijvoorbeeld een id, een tijdstempel of een naam etc.
 3. <i>Verify signature</i>: deze is er om ervoor te zorgen dat we zeker weten dat de sleutel van een bepaalde bron komt en deze is als enige niet aan te passen.
 
@@ -254,13 +254,13 @@ Wanneer je een token hebt, kun je hem in de Encoded box zetten en dan zal de web
 
 ### Gegevens in de frontend
 
-Onze JWT kunnen we kwijt in de <i>local storage</i> of in een <i>cookie</i>.
+De JWT kunnen we kwijt in de <i>local storage</i> of in een <i>cookie</i>.
 
-Een cookie is een klein text bestandje dat wordt opgeslagen in de browser, om daar data kwijt te kunnen die we later weer kunnen bereiken.
+Een cookie is een klein text bestandje dat wordt opgeslagen in de browser. Om daar data kwijt te kunnen die we later weer kunnen bereiken.
 
-De local storage is ook een stukje wat in de browser opgeslagen staat. De local storage kun je ook altijd bereiken. 
+Local storage is ook een stukje wat in de browser opgeslagen staat. De local storage kun je ook altijd bereiken. 
 
-Op die manier kunnen we altijd terughalen of de gebruiker bijvoorbeeld na het eten weer terugkomt op de website en verder wil, want dit wordt opgeslagen in de <i>browser</i>.
+Op deze manier kunnen we altijd terughalen of de gebruiker bijvoorbeeld na het eten weer terugkomt op de website en verder wil, want dit wordt opgeslagen in de <i>browser</i>.
 
 Wat je niet wilt opslaan zijn gegevens over gebruiker, zoals email of gebruikersnaam, want dit zou je kunnen uitlezen.
 
@@ -270,15 +270,15 @@ De local storage kun je vinden wanneer je de dev tools opent en kiest voor appli
 
 ![img.png](src/assets/img2.png)
 
-De website https://jwt.io/ heeft wat dingen in de local storage gezet. In deze storage kun je dingen opslaan, aanpassen en wordt aan de browser gehangen.
+De website https://jwt.io/ heeft dingen in de local storage gezet. In deze storage kun je iets opslaan, aanpassen en wordt het aan de browser gehangen.
 
 Wanneer je begint met programmeren is local storage makkelijker dan cookies, maar JSON Web Tokens plaats je liever in cookies.
 
 #### Context
 
-Onze gebruikersdata (gebruikersnaam, email, profielfoto etc.) willen we opslaan in de context van de app. Deze moeten we in heel de applicatie beschikbaar hebben, maar die gaan we niet in de local storage zetten.
+De gebruikersdata (gebruikersnaam, email, profielfoto etc.) willen we opslaan in de context van de app. Deze moet in heel de applicatie beschikbaar zijn, maar die gaan we niet in de local storage zetten.
 
-Wanneer het in de context staat hebben de componenten altijd toegang tot deze informatie. Maar let op, wanneer de app opnieuw wordt opgestart is de context weer leeg. Op basis van de JWT, die wel in de browser blijft staan, kunnen we opnieuw de gebruikersgegevens ophalen.
+Wanneer het in de context staat hebben de componenten altijd toegang tot deze informatie. Maar <i>let op</i>, wanneer de app opnieuw wordt opgestart is de context weer leeg. Op basis van de JWT, die wel in de browser blijft staan, kunnen we opnieuw de gebruikersgegevens ophalen.
 
 Wat willen we niet opslaan in de context:
 - JWT token
