@@ -329,12 +329,9 @@ De volgende stappen doorlopen we om te kunnen registreren.
 6. Gebruiker doorsturen naar inlog-formulier
 
 <i>Stap 1: installeer `npm install axios` en importeer axios</i>
-
-    import React from 'react';
+    
     import axios from 'axios';
-    import { Link } from 'react-router-dom';
-    import { useForm } from 'react-hook-form';
-
+   
 <i>Stap 2: asynchrone functie</i>
 
     async function onSubmit(data) {
@@ -541,3 +538,195 @@ Hierin zet je de history push pagina.
       }
       
       export default SignUp;
+
+## Inloggen (SignIn.js)
+
+Het inloggen kunnen we doen door een `POST request` naar de basisurl (http://localhost:3000) + `/login` te doen (zie documentatie fake_server_react).
+
+De keys `email` en `password` zijn vereist om mee in te kunnen loggen (dus niet `username`!). In de request body vinden we dus alleen het emailadres en wachtwoord van de gebruiker, er mogen geen andere gegevens meegestuurd worden.
+
+De volgende stappen doorlopen we om te kunnen inloggen.
+
+1. Importeer axios
+2. asynchrone functie
+3. try/catch blok
+   - error
+   - loading
+4. In try: post request maken naar endpoint: http://localhost:3000/login, axios post request krijgt de url en het dataobject mee (deze moet email en password bevatten)
+5. Wat we terugkrijgen is JWT token, die moet in de local storage
+6. Gebruiker doorsturen naar /profile
+
+<i>Stap 1: Importeer axios</i>
+
+    import axios from 'axios';
+
+<i>Stap 2: asynchrone functie</i>
+
+      async function onSubmit(data) {
+         console.log(data);
+      }
+
+<i>Stap 3: try / catch blok + error & loading</i>
+
+      const [error, setError] = useState("");
+      const [loading, toggleLoading] = useState("");
+
+          async function onSubmit(data) {
+              console.log(data);
+              try {
+                  
+              } catch (e) {
+                  setError("Er is iets misgegaan bij het ophalen van de data.")
+                  console.error(e)
+              }
+              toggleLoading(false);
+          }
+
+      return (
+         <>
+            <h1>Inloggen</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab alias cum debitis dolor dolore fuga id
+            molestias qui quo unde?</p>
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+                {error && <p>{error}</p>}
+                {loading && <p>Data wordt geladen...</p>}
+
+<i>Stap 4: In try: post request maken naar endpoint: http://localhost:3000/login, axios post request krijgt de url en het dataobject mee (deze moet email en password bevatten)</i>
+
+    async function onSubmit(data) {
+        console.log(data);
+        try {
+            const result = await axios.post('http://localhost:3000/login', data);
+            console.log(result);
+        } catch (e) {
+            setError("Er is iets misgegaan bij het ophalen van de data.")
+            console.error(e)
+        }
+        toggleLoading(false);
+    }
+
+We gaan inloggen.
+
+![img.png](src/assets/img6.png)
+
+In de console krijgen we het volgende terug.
+
+![img.png](src/assets/img7.png)
+
+We willen toegang tot de JWT accessToken. Die zit op `data.data.accessToken`.
+
+      console.log(result.data.accessToken);
+
+<i>Stap 5: Wat we terugkrijgen is JWT token, die moet in de local storage</i>
+
+De token die je terugkrijgt in de console, kun je op de website van JWT in Encoded zetten.
+
+![img8.png](src/assets/img8.png)
+
+Deze token willen we in de local storage zetten.
+
+      localStorage.setItem('tokenFrummel', result.data.accessToken);
+
+<i> Stap 6: Gebruiker doorsturen naar /profile</i>
+
+Wanneer je iemand wilt doorpushen naar een andere pagina in React heb je `useHistory` nodig.
+
+We importeren useHistory.
+
+      import {Link, useHistory} from 'react-router-dom';
+
+We maken een variabele history aan.
+
+      const history = useHistory();
+
+We pushen history naar de signin pagina.
+
+      history.push('/profile');
+
+Wanneer je nu gaat registreren ga je gelijk naar de inlog pagina, maar je wilt nog wel eerst de registerSuccess melding geven aan de gebruiker. We kunnen het handmatig vertragen.
+
+      setTimeout(() => {}, 2000);
+
+Hierin zet je de history push pagina.
+
+      setTimeout(() => {
+         history.push('/profile');                
+      }, 2000);
+
+Als je naar Dev Tools gaat in de browser en vervolgens klikt op application, zie de token van Frummel staan.
+
+![img.png](src/assets/img9.png)
+
+### Volledige code pagina SignIn.js
+
+      import React, {useState} from 'react';
+      import axios from 'axios';
+      import {useForm} from 'react-hook-form';
+      import {Link, useHistory} from 'react-router-dom';
+      
+      function SignIn() {
+      const {handleSubmit, register} = useForm();
+      const [error, setError] = useState("");
+      const [loading, toggleLoading] = useState("");
+      const history = useHistory();
+      
+          async function onSubmit(data) {
+              console.log(data);
+              try {
+                  const result = await axios.post('http://localhost:3000/login', data);
+                  console.log(result.data.accessToken);
+                  localStorage.setItem('tokenFrummel', result.data.accessToken);
+                  setTimeout(() => {
+                      history.push('/profile');
+                  }, 2000);
+              } catch (e) {
+                  setError("Er is iets misgegaan bij het ophalen van de data.")
+                  console.error(e)
+              }
+              toggleLoading(false);
+          }
+      
+          return (
+              <>
+                  <h1>Inloggen</h1>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab alias cum debitis dolor dolore fuga id
+                      molestias qui quo unde?</p>
+      
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                      {error && <p>{error}</p>}
+                      {loading && <p>Data wordt geladen...</p>}
+      
+                      <label htmlFor="email-field">
+                          Emailadres:
+                          <input
+                              type="email"
+                              id="email-field"
+                              name="email"
+                              {...register("email")}
+                          />
+                      </label>
+      
+                      <label htmlFor="password-field">
+                          Wachtwoord:
+                          <input
+                              type="password"
+                              id="password-field"
+                              name="password"
+                              {...register("password")}
+                          />
+                      </label>
+      
+                      <button
+                          type="submit"
+                          className="form-button"
+                      >
+                          Inloggen
+                      </button>
+                  </form>
+                  <p>Heb je nog geen account? <Link to="/signup">Registreer</Link> je dan eerst.</p>
+              </>
+          );
+      }
+      
+      export default SignIn;
