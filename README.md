@@ -283,3 +283,18 @@ Wanneer het in de context staat hebben de componenten altijd toegang tot deze in
 Wat willen we niet opslaan in de context:
 - JWT token
 - het wachtwoord van de gebruiker
+
+## Fake database server
+We hebben een server nodig om data in op te slaan, om de echte situatie na te kunnen doen. Deze kun je vinden op github: https://github.com/danielle076/fake_server_react. In het db.json worden 'zogenaamd' de gebruikers opgeslagen.  
+
+De nepserver draait apart van de frontend project, zodat we de "database" via een API kunnen benaderen. Zo kun je door gebruik te maken van specifieke eindpoints, data opvragen en toevoegen.
+
+Voor je de server kunt gebruiken zul je de de dependencies moeten installeren met het commando: `inpm install`. 
+
+Er is een speciaal script aangemaakt om deze server te runnen. Het letterlijke script kun je terugvinden in de package.json. Om de server te starten voer je het volgende commando in de terminal: `npm run json:server`.
+
+Deze server draait op http://localhost:3000, wanneer je dit in de browser opent zul je alle beschikbare endpoints zien verschijnen.
+
+<i>Let op</i>: omdat deze server op localhost:3000 draait is het belangrijk deze server te starten voor je een React-project start. React zal dan automatisch vragen om dat project op een andere port te draaien.
+
+Het benaderen van de endpoints staat in de documentatie.
