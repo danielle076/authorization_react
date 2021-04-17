@@ -730,3 +730,88 @@ Als je naar Dev Tools gaat in de browser en vervolgens klikt op application, zie
       }
       
       export default SignIn;
+
+## Context (AuthContext.js)
+
+Inloggen staat nu nog op de verkeerde plek want we willen dit gaan regelen in de context. We willen de gebruikersdata in de context plaatsen zodat alle componenten erbij kunnen.
+
+We maken een nieuwe map: context. Hierin zetten we een bestand genaamd `AuthContext.js`.
+
+Voor context hebben we de volgende dingen nodig:
+1. AuthContext maken met createContext
+2. AuthContextProvider functie component bouwen met daarin:
+   - het echte AuthContext.Provider component
+   - geef een data object mee via de `value={}` property in de Provider 
+   - stukje state etc.
+3. Wikkelen we de Provider om `<App/>` heen in index.js
+
+<i>Stap 1: AuthContext maken met createContext</i>
+
+      import React, {createContext} from 'react';
+
+      export const AuthContext = createContext({});
+
+<i>Stap 2: AuthContextProvider functie component bouwen</i>
+
+      function AuthContextProvider(){
+         return(
+      
+         );
+      }
+      
+      export default AuthContextProvider;
+
+We returnen het echte AuthContext.Provider component.
+
+      function AuthContextProvider() {
+         return (
+            <AuthContext.Provider>
+      
+            </AuthContext.Provider>
+         );
+      }
+
+Wat tussen `AuthContext.Provider` moeten komen te staan is de `<App/>`, maar omdat we `AuthContextProvider` als jasje om `<App/>` gaan wikkelen en hier dus gewoon hetgeen moet komen te staan waar we `AuthContextProvider` om heen wikkelen, gaan we de `children` prop er neerzetten. Zodat we eigenlijk zeggen, we mogen hem straks wrappen.
+
+      function AuthContextProvider({children}) {
+         return (
+            <AuthContext.Provider>
+               {children}
+            </AuthContext.Provider>
+         );
+      }
+
+`AuthContext.Provider` moet een value krijgen.
+
+      function AuthContextProvider({children}) {
+         return (
+            <AuthContext.Provider value={}>
+               {children}
+            </AuthContext.Provider>
+         );
+      }
+
+In de value gaan we de informatie zetten is de informatie die we in de hele applicatie beschikbaar willen hebben. Dit zal de gebruikersdata zijn en het zien of iemand ingelogd is of niet. Hetgeen wat we ook beschikbaar gaan maken is de inlogfunctie en de uitlogfunctie, dit zijn ook onderdelen die in de context worden beheerd.
+
+<i>Stap 3: Wikkelen we de Provider om `<App/>` heen in index.js</i>
+
+      import React from 'react';
+      import ReactDOM from 'react-dom';
+      import {BrowserRouter as Router} from 'react-router-dom';
+      import './index.css';
+      import App from './App';
+      import reportWebVitals from './reportWebVitals';
+      import AuthContextProvider from "./context/AuthContext";
+      
+      ReactDOM.render(
+         <React.StrictMode>
+            <Router>
+               <AuthContextProvider>
+                  <App/>
+               </AuthContextProvider>
+            </Router>
+         </React.StrictMode>,
+         document.getElementById('root')
+      );
+      
+      reportWebVitals();
