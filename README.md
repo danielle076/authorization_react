@@ -741,8 +741,7 @@ Voor context hebben we de volgende dingen nodig:
 1. AuthContext maken met createContext
 2. AuthContextProvider functie component bouwen met daarin:
    - het echte AuthContext.Provider component
-   - geef een data object mee via de `value={}` property in de Provider 
-   - stukje state etc.
+   - geef een data object mee via de `value={}` property in de Provider
 3. Wikkelen we de Provider om `<App/>` heen in index.js
 
 <i>Stap 1: AuthContext maken met createContext</i>
@@ -791,7 +790,7 @@ Wat tussen `AuthContext.Provider` moeten komen te staan is de `<App/>`, maar omd
          );
       }
 
-In de value gaan we de informatie zetten is de informatie die we in de hele applicatie beschikbaar willen hebben. Dit zal de gebruikersdata zijn en het zien of iemand ingelogd is of niet. Hetgeen wat we ook beschikbaar gaan maken is de inlogfunctie en de uitlogfunctie, dit zijn ook onderdelen die in de context worden beheerd.
+In de value gaan we de informatie zetten die we in de hele applicatie beschikbaar willen hebben. Dit zal de gebruikersdata zijn en het zien of iemand ingelogd is of niet. Hetgeen wat we ook beschikbaar gaan maken is de inlogfunctie en de uitlogfunctie, dit zijn ook onderdelen die in de context worden beheerd.
 
 <i>Stap 3: Wikkelen we de Provider om `<App/>` heen in index.js</i>
 
@@ -815,3 +814,98 @@ In de value gaan we de informatie zetten is de informatie die we in de hele appl
       );
       
       reportWebVitals();
+
+## Authenticatie (AuthContext.js)
+
+We hebben een plekje nodig om de gebruikersdata in op te slaan.
+1. Bedenk welke data je in de context beschikbaar moet stellen en maak daar een raamwerk voor: state, login en loguit + maak de state aan en de lege functies
+2. Plaats de state en functies in een data object en geeft die mee via de value={} prop
+3. Test de context door een component aan te melden op de context met useContext
+4. Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen
+5. Uitlogfunctie: het proces van uitloggen (JWT token uit de local storage halen en context leeghalen)
+6. Implementeren dat bij refresh wordt gecheckt of er nog een JWT token is en zo ja: gebruikersdata ophalen
+
+<i>Stap 1: Bedenk welke data je in de context beschikbaar moet stellen en maak daar een raamwerk voor: state, login en loguit + maak de state aan en de lege functies</i>
+
+In state gaan we een object plaatsen met de gebruikersdata en later willen er misschien ook andere dingen inzetten. We noemen hem `authState`, omdat de data die we kwijt willen is of iemand ingelogd is ja of nee.
+We zetten er een `key` in met `user`, zodat we hierna ook andere dingen hierin kunnen zetten. Als we beginnen hebben we geen gebruiker, dus is de gebruiker `null`. Later komt hier een object bij te staan.
+
+      import React, {createContext, useState} from 'react';
+
+      function AuthContextProvider({children}) {
+         const [authState, setAuthState] = useState({
+            user: null,
+      });
+
+Lege inlogfunctie maken.
+
+      function loginFunction(){
+         console.log('Login!');
+      }
+
+Lege uitlogfunctie maken.
+
+    function logoutFunction(){
+        console.log('Logout!')
+    }
+
+<i>Stap 2: Plaats de state en functies in een data object en geeft die mee via de value={} prop</i>
+
+In de value gaan we de informatie zetten die we in de hele applicatie beschikbaar willen hebben. Dit zal de gebruikersdata zijn en het zien of iemand ingelogd is of niet. Hetgeen wat we ook beschikbaar gaan maken is de inlogfunctie en de uitlogfunctie, dit zijn ook onderdelen die in de context worden beheerd.
+
+    const data = {
+
+    }
+    
+    return (
+        <AuthContext.Provider value={data}>
+            {children}
+        </AuthContext.Provider>
+    );
+
+Wat willen we hierin zetten, we willen de functies beschikbaar maken. Onder de `key` login zetten we de loginFunction en onder de `key` logout zetten we logoutFunction.
+
+    const data = {
+      login: loginFunction,
+      logout: logoutFunction,
+    }
+
+Wat we nog meer moeten meegeven is het stukje `authState`, want die informatie hebben we ook nodig of een gebruiker ingelogd is of niet. Het stukje state is nu een object en we willen dat dit object dynamisch wordt geupdate, dus gaan we hem spreadden met de spread-operator. Wat de spread-operator doet, hij kopieert en verwijst naar dat object, zodra dat object wordt geupdate zal dit ook worden geupdate.
+
+    const data = {
+        ...authState,
+      login: loginFunction,
+      logout: logoutFunction,
+    }
+
+<i>Stap 3: Test de context door een component aan te melden op de context met useContext</i>
+
+We gaan de /Profile pagina gebruiken om te testen.
+
+We importeren `useContext` en `AuthContext`.
+
+      import React, {useContext} from 'react';
+      import { AuthContext } from "../context/AuthContext";
+
+Omdat we `authState` hebben gespread (we hebben het volledige object hierin geplaatst) hebben we een directe key met user beschikbaar.
+
+      function Profile() {
+         const {user} = useContext(AuthContext);
+         console.log(user);
+
+Deze is op dit moment `null`, want er is niemand ingelogd.
+
+<i>Stap 4: Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen</i>
+
+Als iemand zich inlogt dan hebben we alle gebruikersdata nodig en de token moeten we in de local storage zetten.
+
+Als iemand inlogt, hoeft hij maar twee velden in te voeren: email & wachtwoord. Wanneer iemand zich registreert krijgen we een token. Als je deze token decode op jwt.io zie je dat we ook een id meekrijgen (bijvoorbeeld. sub: 1). Deze id is handig omdat we een specifieke gebruiker kunnen opvragen in de database. Bottomline: om de dingen waar te maken in de login functie van de context hebben we de JWT token nodig.
+
+Op dit moment doen we hem handmatig in de local storage zetten in SignIn.js:
+
+      localStorage.setItem('tokenFrummel', result.data.accessToken)
+
+Dit laten we straks door de context doen. Dus we weten dat de `accessToken` die moet worden meegegeven aan de loginFunction in AuthContext.js.
+
+In de loginFunction van AuthContext hebben we de JWT token nodig om daaruit de user ID te halen. Als we de JWT token hebben gaan we deze in de local storage zetten en we gaan gebruikersdata ophalen. Die data gaan we gebruiken om de context te vullen. Als laatste gaan we doorlinken met history.push naar de profiel pagina.
+
