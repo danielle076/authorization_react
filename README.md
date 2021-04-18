@@ -821,7 +821,7 @@ We hebben een plekje nodig om de gebruikersdata in op te slaan.
 1. Bedenk welke data je in de context beschikbaar moet stellen en maak daar een raamwerk voor: state, login en loguit + maak de state aan en de lege functies
 2. Plaats de state en functies in een data object en geeft die mee via de value={} prop
 3. Test de context door een component aan te melden op de context met useContext
-4. Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen
+4. Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen  en redirect ook vanuit daar door naar de profielpagina
 5. Uitlogfunctie: het proces van uitloggen (JWT token uit de local storage halen en context leeghalen)
 6. Implementeren dat bij refresh wordt gecheckt of er nog een JWT token is en zo ja: gebruikersdata ophalen
 
@@ -895,7 +895,7 @@ Omdat we `authState` hebben gespread (we hebben het volledige object hierin gepl
 
 Deze is op dit moment `null`, want er is niemand ingelogd.
 
-<i>Stap 4: Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen</i>
+<i>Stap 4: Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen  en redirect ook vanuit daar door naar de profielpagina</i>
 
 Als iemand zich inlogt dan hebben we alle gebruikersdata nodig en de token moeten we in de local storage zetten.
 
@@ -908,4 +908,256 @@ Op dit moment doen we hem handmatig in de local storage zetten in SignIn.js:
 Dit laten we straks door de context doen. Dus we weten dat de `accessToken` die moet worden meegegeven aan de loginFunction in AuthContext.js.
 
 In de loginFunction van AuthContext hebben we de JWT token nodig om daaruit de user ID te halen. Als we de JWT token hebben gaan we deze in de local storage zetten en we gaan gebruikersdata ophalen. Die data gaan we gebruiken om de context te vullen. Als laatste gaan we doorlinken met history.push naar de profiel pagina.
+
+In SignIn.js doen we de volgende stappen:
+- Importeer useContext en AuthContext
+- Destructure daar de login functie uit
+- We roepen de functie aan met `login(result.data.accessToken)`
+
+      import React, {useState, useContext} from 'react';
+      import {AuthContext} from "../context/AuthContext";
+
+      function SignIn() {
+         const {login} = useContext(AuthContext)
+
+         async function onSubmit(data) {
+            console.log(data);
+            try {
+               const result = await axios.post('http://localhost:3000/login', data);
+               console.log(result.data.accessToken);
+   
+               login(result.data.accessToken)
+
+Om ervoor te zorgen dat de accesToken van SignIn.js in de loginFunction van AuthContext.js wordt meegegeven, zodat we daar allemaal dingen kunnen doen, geven we login (SignIn.js) het argument 'result.data.accessToken' en de loginFunction (AuthContext.js) het argument jwtToken.
+
+      function loginFunction(jwtToken) {
+         console.log(jwtToken);
+          }
+
+Wanneer je inlogt wordt de token in de console log gelogd.
+
+![img.png](src/assets/img10.png)
+
+We knippen de local storage van SignIn.js eruit en zetten deze in de loginFunction van AuthContext.js.
+
+      function loginFunction(jwtToken) {
+         console.log(jwtToken);
+         localStorage.setItem('tokenFrummel', result.data.accessToken);
+      }
+
+De `result.data.accessToken` wordt `jwtToken`.
+
+      function loginFunction(jwtToken) {
+         console.log(jwtToken);
+         localStorage.setItem('tokenFrummel', jwtToken);
+      }
+
+Het doorlinken naar de profielpagina knippen we uit de SignIn.js en zetten we in de loginFunction van AuthContext.js. Ook zetten we de useHistory over van de Signin.js naar AuthContext.js.
+
+      import {useHistory} from "react-router-dom";
+
+      function AuthContextProvider({children}) {
+         const history = useHistory();
+
+      function loginFunction(jwtToken) {
+         console.log(jwtToken);
+         localStorage.setItem('tokenFrummel', jwtToken);
+         setTimeout(() => {
+            history.push('/profile');
+         }, 2000);
+      }
+
+Wanneer je de JWT token wilt decoden, dan heb je een package nodig: https://www.npmjs.com/package/jwt-decode. Die installeer je met `npm i jwt-decode`
+
+We importeren deze package in AuthContext.js.
+
+      import jwt_decode from "jwt-decode";
+
+Nu kunnen we hem gebruiken in de loginFunction.
+
+    function loginFunction(jwtToken) {
+        console.log(jwtToken);
+        const decoded = jwt_decode(jwtToken);
+        console.log("DECODED JWT:", decoded)
+        localStorage.setItem('tokenFrummel', jwtToken);
+        setTimeout(() => {
+            history.push('/profile');
+        }, 2000);
+    }
+
+![img.png](src/assets/img11.png)
+
+Je ziet in de console dat we een email, expo, iat en sub property hebben.
+
+Wanneer we de gebruikersdetails willen opvragen hebben we een `GET request` nodig en de basisurl (http://localhost:3000) + `/600/users/:id` (zie documentatie fake_server_react).
+
+Alleen een ingelogde gebruiker kan zijn <b>eigen</b> gebruikersinformatie opvragen. Geef in het endpoint de `id` van gebruiker mee waarvan je de gegevens wil opvragen (dus bijvoorbeeld `/600/users/1` of `/600/users/2`). In de request body moet de JWT token worden meegestuurd om te checken of de ingelogde gebruiker wel toegang heeft tot deze resource. Gebruikers mogen immers alleen hun eigen gegevens opvragen.
+
+In AuthContext.js gaan we dit implementeren.
+
+    function loginFunction(jwtToken) {
+        console.log(jwtToken);
+        const decoded = jwt_decode(jwtToken);
+        const userId = decoded.sub
+        console.log("DECODED JWT:", decoded)
+        localStorage.setItem('tokenFrummel', jwtToken);
+        setTimeout(() => {
+            history.push('/profile');
+        }, 2000);
+    }
+
+We gaan de gebruikersdata ophalen: we hebben een request nodig. Hiervoor moeten we axios gebruiken, async, try/catch en request maken. Het get request ontvangt 2 argumenten, de URL en een config {}. In de config mogen we specificaties meegeven. Omdat we geauthoriseerde content willen ophalen, gaan we een authorization headers meegeven. Maak van de URL een template, want je wilt de id van gebruiker ophalen: `usedId`.
+
+      import axios from 'axios';
+      
+      async function loginFunction(jwtToken) {
+         console.log(jwtToken);
+         const decoded = jwt_decode(jwtToken);
+         const userId = decoded.sub;
+         console.log("DECODED JWT:", decoded)
+         localStorage.setItem('tokenFrummel', jwtToken);
+
+         try {
+            const result = await axios.get(`http://localhost:3000/600/users/${userId}`, {
+               headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${jwtToken}`,
+               }
+            })
+            console.log(result)
+         } catch (e) {
+            console.error(e);
+         }
+         
+        setTimeout(() => {
+            history.push('/profile');
+        }, 2000);
+      }                
+
+In de console wordt het volgende gelogd. Er komt een response object uit. 
+
+![img.png](src/assets/img12.png)
+
+Wanneer we data openmaken, zien we gegevens over onze gebruiker. We kunnen email, id en username van de gebruiker verzamelen en in de context gaan zetten. Dus we hebben result.data + alle keys nodig.
+
+![img.png](src/assets/img13.png)
+
+Als iets in onze state willen zetten, hebben we de `setAuthState` nodig. 
+
+      async function loginFunction(jwtToken) {
+        console.log(jwtToken);
+        const decoded = jwt_decode(jwtToken);
+        const userId = decoded.sub;
+        console.log("DECODED JWT:", decoded)
+        localStorage.setItem('tokenFrummel', jwtToken);
+
+        try {
+            const result = await axios.get(`http://localhost:3000/600/users/${userId}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${jwtToken}`,
+                }
+            })
+            console.log(result)
+            setAuthState({
+                user: {
+                    username: result.data.username,
+                    email: result.data.email,
+                    id: result.data.id,
+                }
+            })
+            setTimeout(() => {
+                history.push('/profile');
+            }, 2000);
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+Op Profile.js hebben we een console log met user, dus zou deze in de console komen te staan.
+
+![img.png](src/assets/img14.png)
+
+Op het moment dat we geen gebruiker hebben (beginnen met het laden van de applicatie), zetten we de status op 'pending'.
+
+      const [authState, setAuthState] = useState({
+         user: null,
+         status: 'pending',
+      });
+
+Zodra we klaar zijn met het ophalen van data, willen we dat de status op 'done' komt te staan of we nu een gebruiker hebben of niet. Op basis van die status, gaan we ervoor zorgen dat de applicatie wel of niet wordt geladen.
+
+      setAuthState({
+         user: {
+            username: result.data.username,
+            email: result.data.email,
+            id: result.data.id,
+         },
+            status: 'done',
+      })
+
+Op de plek waar de app wordt weergegeven, mag je `children` pas laten zien op het moment dat wij niet meer op 'pending' staan. Als de status 'done' is, dan mag de app laden. Als dit niet waar is dan 'Loading...'
+
+    return (
+        <AuthContext.Provider value={data}>
+            {authState.status === 'done'
+                ? children
+            : <p>Loading...</p>
+            }
+        </AuthContext.Provider>
+    );
+
+Wanneer de applicatie geladen wordt, willen we checken of er een token is en als die er is maar er is geen gebruiker, dan willen we alsnog de gebruikersdata ophalen. De functie die we nodig hebben om iets te doen op het moment dat de pagina is geladen is `useEffect`. 
+
+In de useEffect gaan we checken: is er een token? Is er GEEN user? Haal dan data op (zoals bij de login). Zo nee, dan geen user maar wel status op 'done'.
+
+    useEffect(() => {
+
+        setAuthState({
+            user: null,
+            status: 'done',
+        })
+
+    }, []);
+
+Wanneer we de console openen dan zie je de gegevens uit de context. We kunnen deze gegevens gebruiken op de profielpagina.
+
+![img.png](src/assets/img15.png)
+
+De gebruikersnaam op Profile.js wordt {user.username} en het e-mail adres {user.email}.
+
+      return (
+         <>
+            <h1>Profielpagina</h1>
+            <h2>Gegevens</h2>
+            <p><strong>Gebruikersnaam:</strong> {user.username}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <h2>Afgeschermde content voor ingelogde gebruikers</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab alias cum debitis dolor dolore fuga id
+            molestias qui quo unde?</p>
+            <p>Terug naar de <Link to="/">Homepagina</Link></p>
+         </>
+      );
+
+Let op dat je opnieuw inlogt, want anders krijg je een error pagina te zien. Wanneer je bent ingelogd zie je het volgende. De hardcoded text is dynamisch geworden (hetgeen waarmee is ingelogd zie je in beeld).
+
+![img.png](src/assets/img16.png)
+
+Wanneer je op refresh druk, krijg je een error. Dit komt omdat de context leeggemaakt wordt.
+
+In de useEffect gaan we checken: is er een token? Is er GEEN user? Haal dan data op (zoals bij de login). De key die je meegeeft is dezelfde naam als die in de localStorage setItem.
+
+    useEffect(() => {
+        const token = localStorage.getItem('tokenFrummel');
+
+        if (token !== undefined && authState.user === null) {
+            console.log("Er is een token")
+        } else {
+            setAuthState({
+                user: null,
+                status: 'done',
+            });
+        }
+    }, []);
 

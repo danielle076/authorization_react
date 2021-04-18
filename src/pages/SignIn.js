@@ -1,23 +1,21 @@
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import axios from 'axios';
 import {useForm} from 'react-hook-form';
-import {Link, useHistory} from 'react-router-dom';
+import {Link} from 'react-router-dom';
+import {AuthContext} from "../context/AuthContext";
 
 function SignIn() {
+    const {login} = useContext(AuthContext);
     const {handleSubmit, register} = useForm();
     const [error, setError] = useState("");
     const [loading, toggleLoading] = useState("");
-    const history = useHistory();
 
     async function onSubmit(data) {
         console.log(data);
         try {
             const result = await axios.post('http://localhost:3000/login', data);
-            console.log(result.data.accessToken);
-            localStorage.setItem('tokenFrummel', result.data.accessToken);
-            setTimeout(() => {
-                history.push('/profile');
-            }, 2000);
+            // console.log(result.data.accessToken);
+            login(result.data.accessToken);
         } catch (e) {
             setError("Er is iets misgegaan bij het ophalen van de data.")
             console.error(e)
