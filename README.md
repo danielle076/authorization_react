@@ -1212,11 +1212,8 @@ De fetchUserData gaat herhaald worden (dit is bijna dezelfde functie als loginFu
 
 Bij de loginFunction gaan we een stuk vervangen met fetchUserData en de jwtToken.
 
-      async function loginFunction(jwtToken) {
+    async function loginFunction(jwtToken) {
         // console.log(jwtToken);
-        const decoded = jwt_decode(jwtToken);
-        const userId = decoded.sub;
-        // console.log("DECODED JWT:", decoded)
         localStorage.setItem('tokenFrummel', jwtToken);
 
         fetchUserData(jwtToken);
@@ -1226,3 +1223,6 @@ Bij de loginFunction gaan we een stuk vervangen met fetchUserData en de jwtToken
         }, 2000);
     }
 
+<i>5. Uitlogfunctie: het proces van uitloggen (JWT token uit de local storage halen en context leeghalen)</i>
+
+We gaan de local storage leeghalen met localStorage.clear() en de user in de context op 'null' zetten.

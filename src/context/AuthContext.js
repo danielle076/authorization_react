@@ -54,9 +54,6 @@ function AuthContextProvider({children}) {
 
     async function loginFunction(jwtToken) {
         // console.log(jwtToken);
-        const decoded = jwt_decode(jwtToken);
-        const userId = decoded.sub;
-        // console.log("DECODED JWT:", decoded)
         localStorage.setItem('tokenFrummel', jwtToken);
 
         fetchUserData(jwtToken);
@@ -78,10 +75,11 @@ function AuthContextProvider({children}) {
 
     return (
         <AuthContext.Provider value={data}>
-            {authState.status === 'done'
-                ? children
-                : <p>Loading...</p>
-            }
+            {/*{authState.status === 'done'*/}
+            {/*    ? children*/}
+            {/*    : <p>Loading...</p>*/}
+            {/*}*/}
+            {children}
         </AuthContext.Provider>
     );
 }
