@@ -64,7 +64,11 @@ function AuthContextProvider({children}) {
     }
 
     function logoutFunction() {
-        console.log('Logout!')
+        localStorage.clear();
+        setAuthState({
+            ...authState,
+            user: null,
+        });
     }
 
     const data = {
@@ -75,11 +79,10 @@ function AuthContextProvider({children}) {
 
     return (
         <AuthContext.Provider value={data}>
-            {/*{authState.status === 'done'*/}
-            {/*    ? children*/}
-            {/*    : <p>Loading...</p>*/}
-            {/*}*/}
-            {children}
+            {authState.status === 'done'
+                ? children
+                : <p>Loading...</p>
+            }
         </AuthContext.Provider>
     );
 }

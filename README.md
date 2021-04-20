@@ -823,7 +823,6 @@ We hebben een plekje nodig om de gebruikersdata in op te slaan.
 3. Test de context door een component aan te melden op de context met useContext
 4. Inlogfunctie: het proces van inloggen (JWT token in local storage zetten en gebruikersdata opslaan in de context) in de provider regelen  en redirect ook vanuit daar door naar de profielpagina
 5. Uitlogfunctie: het proces van uitloggen (JWT token uit de local storage halen en context leeghalen)
-6. Implementeren dat bij refresh wordt gecheckt of er nog een JWT token is en zo ja: gebruikersdata ophalen
 
 <i>Stap 1: Bedenk welke data je in de context beschikbaar moet stellen en maak daar een raamwerk voor: state, login en loguit + maak de state aan en de lege functies</i>
 
@@ -1226,3 +1225,11 @@ Bij de loginFunction gaan we een stuk vervangen met fetchUserData en de jwtToken
 <i>5. Uitlogfunctie: het proces van uitloggen (JWT token uit de local storage halen en context leeghalen)</i>
 
 We gaan de local storage leeghalen met localStorage.clear() en de user in de context op 'null' zetten.
+
+      function logoutFunction() {
+         localStorage.clear();
+         setAuthState({
+            ...authState,
+            user: null,
+         });
+      }
