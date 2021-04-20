@@ -1151,7 +1151,7 @@ In de useEffect gaan we checken: is er een token? Is er GEEN user? Haal dan data
     useEffect(() => {
         const token = localStorage.getItem('tokenFrummel');
 
-        if (token !== undefined && authState.user === null) {
+        if (token !== null && authState.user === null) {
             console.log("Er is een token")
         } else {
             setAuthState({
@@ -1160,4 +1160,69 @@ In de useEffect gaan we checken: is er een token? Is er GEEN user? Haal dan data
             });
         }
     }, []);
+
+We maken een fetchUserData functie.
+
+      async function fetchUserData(){
+
+      }
+
+    useEffect(() => {
+        const token = localStorage.getItem('tokenFrummel');
+
+        if (token !== null && authState.user === null) {
+            // console.log("Er is een token")
+
+            fetchUserData(token);
+
+        } else {
+            setAuthState({
+                user: null,
+                status: 'done',
+            });
+        }
+    }, []);
+
+De fetchUserData gaat herhaald worden (dit is bijna dezelfde functie als loginFunction). Deze functie, die dus setAuthState, de gebruikersdata ophaalt en in de state zet. Die willen we aanroepen op het moment dat we in de fetchUserData() van useEffect komen. 
+
+      async function fetchUserData(jwtToken) {
+        const decoded = jwt_decode(jwtToken);
+        const userId = decoded.sub;
+
+        try {
+            const result = await axios.get(`http://localhost:3000/600/users/${userId}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${jwtToken}`,
+                }
+            })
+            setAuthState({
+                user: {
+                    username: result.data.username,
+                    email: result.data.email,
+                    id: result.data.id,
+                },
+                status: 'done',
+            })
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+Bij de loginFunction gaan we een stuk vervangen met fetchUserData en de jwtToken.
+
+      async function loginFunction(jwtToken) {
+        // console.log(jwtToken);
+        const decoded = jwt_decode(jwtToken);
+        const userId = decoded.sub;
+        // console.log("DECODED JWT:", decoded)
+        localStorage.setItem('tokenFrummel', jwtToken);
+
+        fetchUserData(jwtToken);
+
+        setTimeout(() => {
+            history.push('/profile');
+        }, 2000);
+    }
 
